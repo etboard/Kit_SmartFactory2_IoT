@@ -1,0 +1,2 @@
+// 231005
+// etboard_wifi.cpp : if SPIFFS error then format SPIFFS

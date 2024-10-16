@@ -4,8 +4,9 @@
 # Author       : 박은정
 # Created Date : 2024.09.11 : PEJ
 # Reference    :
+# Modified     : 2024.10.16 : PEJ : 드럼통 출고 방식 변경, Footer 주석 추가, 파일명 수정
 # ******************************************************************************************
-board_firmware_version = 'smartFty_0.93';
+board_firmware_version = 'smartFty_0.94';
 
 
 #===========================================================================================
@@ -81,7 +82,7 @@ def initializing_process():                              # 센싱 처리
     pos = 0
     block_state = 'close'
 
-    servo_geer.write_angle(150)
+    do_geer_process()
     servo_block.write_angle(0)
 
     display_information()
@@ -96,19 +97,29 @@ def do_geer_process():                                   # 차단대 작동 처�
 #===========================================================================================
     global pos
 
-    if pos > 3:
-        pos = 0
+    if pos > 3:                                          # pos가 3보다 크다면
+        pos = 0                                          # pos를 0으로 변경
 
     app.send_data('pos', 'state', pos)
 
-    if pos == 1:
-        servo_geer.write_angle(103)
-    elif pos == 2:
-        servo_geer.write_angle(66)
-    elif pos == 3:
-        servo_geer.write_angle(26)
-    else:
-        servo_geer.write_angle(150)
+    p = [150, 110, 72, 34]                               # 각도 저장
+
+    if pos == 0:                                         # pos가 0이라면
+        servo_geer.write_angle(p[0])                     # 톱니바퀴의 각도를 p[0]으로 설정
+        return
+
+    start_angle = p[pos - 1]                             # 톱니바퀴 시작 각도
+    mid_angle = p[pos] + 20                              # 톱니바퀴 중간 각도
+    end_angle = p[pos]                                   # 톱니바퀴 최종 각도
+
+    angle = start_angle                                  # 현재 톱니바퀴 각도
+    while angle != mid_angle:                            # 톱니바퀴를 1도씩 움직임
+        angle -= 1
+        servo_geer.write_angle(angle)
+        time.sleep(0.05)
+
+    servo_geer.write_angle(end_angle)                    # 톱니바퀴를 최종 각도로 설정
+    time.sleep(0.5)
 
 
 #===========================================================================================
@@ -116,11 +127,11 @@ def do_sensing_process():                                # 센싱 처리
 #===========================================================================================
     global pos, distance
 
-    if button_push.value() == LOW:
+    if button_push.value() == LOW:                       # 드럼통 출고 버튼이 눌렸다면
         while True:
             if button_push.value() == HIGH:
                 break
-        pos += 1
+        pos += 1                                         # 톱니바퀴 작동
         do_geer_process()
 
     # 초음파 송신
@@ -142,20 +153,20 @@ def do_automatic_process():                              # 자동화 처리
 #===========================================================================================
     global distance, count, block_state, pre_time
 
-    if distance > 2 and distance < 8:
-        now = int(round(time.time() * 1000))
-        if now - pre_time > 500:
+    if distance > 2 and distance < 8:                    # 측정된 거리가 2 초과 8 미만이라면
+        now = int(round(time.time() * 1000))             # 현재 시간 저장
+        if now - pre_time > 500:                         # 중복 카운트 방지
             pre_time = now
-            count += 1
+            count += 1                                   # 드럼통 출고 개수 증가
             app.send_data('drum', 'count', count)
 
             time.sleep(0.5)
 
-            servo_block.write_angle(75)
+            servo_block.write_angle(75)                  # 차단대 열기
             block_state = 'open'
             app.send_data('block', 'state', block_state)
             time.sleep(1)
-            servo_block.write_angle(0)
+            servo_block.write_angle(0)                   # 차단대 닫기
             block_state = 'close'
             app.send_data('block', 'state', block_state)
 
@@ -248,4 +259,11 @@ def process_reset_control(topic, msg):                   # 리셋 처리
 if __name__ == "__main__":
     setup(app, et_setup)
     while True:
-        loop(app, et_loop, et_short_periodic_process, et_long_periodic_process)                                                                       
+        loop(app, et_loop, et_short_periodic_process, et_long_periodic_process)
+
+
+#===========================================================================================
+#                                                    
+# (주)한국공학기술연구원 http://et.ketri.re.kr       
+#
+#===========================================================================================

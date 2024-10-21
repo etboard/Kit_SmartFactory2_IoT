@@ -5,6 +5,7 @@
 # Created Date : 2024.09.11 : PEJ
 # Reference    :
 # Modified     : 2024.10.16 : PEJ : 드럼통 출고 방식 변경, Footer 주석 추가, 파일명 수정
+# Modified     : 2024.10.21 : SCS : AWS용 커스텀 publish
 # ******************************************************************************************
 board_firmware_version = 'smartFty_0.94';
 
@@ -243,6 +244,7 @@ def send_message():                                      # 메시지 송신
 #===========================================================================================
     global count, pos, block_state, temp, lux
 
+    ''' 2024.10.21 : SCS : 비활성화
     app.add_sensor_data("temp", temp);                   # 센서 데이터 추가
     app.add_sensor_data("lux", lux);                     # 센서 데이터 추가
     app.send_sensor_data(); 
@@ -250,6 +252,13 @@ def send_message():                                      # 메시지 송신
     app.send_data('drum', 'count', count)
     app.send_data('pos', 'state', pos)
     app.send_data('block', 'state', block_state)
+    '''
+    
+    # 2024.10.21 : SCS : AWS용 커스텀 publish
+    topic = 'aws/etboard'
+    json_payload = '{"pos":' + str(pos) + '}'
+    print('publish(', topic, ',', json_payload, ')')
+    app.mqtt.client.publish(topic, json_payload)
 
 
 #===========================================================================================

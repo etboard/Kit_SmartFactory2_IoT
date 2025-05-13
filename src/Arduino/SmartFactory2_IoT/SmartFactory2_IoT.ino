@@ -6,7 +6,7 @@
  * Reference    : 
  * Modified     : 2024.09.10 : PEJ : 프로그램 구조 변경
 ******************************************************************************************/
-const char* board_firmware_verion = "smartFty_0.93";
+const char* board_firmware_verion = "smartFty_0.95";
 
 
 //==========================================================================================
@@ -76,7 +76,7 @@ void initializing_process()                              // 초기화
   count = 0;
   block_state = "close";
 
-  servo_geer.write(150);
+  servo_geer.write(180);
   servo_block.write(0);
 
   display_information();
@@ -91,26 +91,12 @@ void initializing_process()                              // 초기화
 void do_geer_process()                                   // 서보모터 작동 처리
 //==========================================================================================
 {
-  if (pos > 3) {
-    pos = 0;
+  if (pos > 3) {                                         // 각도 값이 3보다 크다면
+    pos = 0;                                             // 0으로 설정
   }
 
-  app.send_data("pos", "state", pos);                    // 톱니바퀴 상태 응답
-
-  switch (pos) {
-    case 1:
-      servo_geer.write(100);
-      break;
-    case 2:
-      servo_geer.write(56);
-      break;
-    case 3:
-      servo_geer.write(28);
-      break;
-    default:
-      servo_geer.write(150);
-      break;
-  }
+  int p[] = {180, 138, 102, 64};                         // 톱니바퀴 각도
+  servo_geer.write(p[pos]);                              // 톱니바퀴 각도 설정
 }
 
 
@@ -155,11 +141,11 @@ void do_automatic_process()                              // 자동화 처리
 
       servo_block.write(75);
       block_state = "open";
-      app.send_data("block", "state", block_state);           // 차단대 상태 응답
+      app.send_data("block", "state", block_state);      // 차단대 상태 응답
       delay(1000);
       servo_block.write(0);
       block_state = "close";
-      app.send_data("block", "state",  block_state);         // 차단대 상태 응답
+      app.send_data("block", "state",  block_state);     // 차단대 상태 응답
     }
   }
 }
@@ -184,8 +170,8 @@ void et_long_periodic_process()                          // 사용자 주기적 
 void display_information()                               // OLED 표시
 //==========================================================================================
 {
-  String string_count = String(count);                   // 수분 값을 문자열로 변환
-  String string_pos = String(pos);                       // 수분 값을 문자열로 변환
+  String string_count = String(count);                   // 카운트 값을 문자열로 변환
+  String string_pos = String(pos);                       // 각도 값을 문자열로 변환
 
   app.oled.setLine(1, board_firmware_verion);            // 1번째 줄에 펌웨어 버전
   app.oled.setLine(2, "count : " + string_count);        // 2번재 줄에 개수
